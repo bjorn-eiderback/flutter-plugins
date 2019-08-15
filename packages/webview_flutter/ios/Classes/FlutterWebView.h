@@ -18,7 +18,7 @@ NS_ASSUME_NONNULL_BEGIN
 @end
 
 @interface FLTWebViewFactory : NSObject <FlutterPlatformViewFactory>
-- (instancetype)initWithMessenger:(NSObject<FlutterBinaryMessenger>*)messenger;
+- (instancetype)initWithRegistrar:(NSObject<FlutterPluginRegistrar>*)registrar;
 @end
 
 NS_ASSUME_NONNULL_END

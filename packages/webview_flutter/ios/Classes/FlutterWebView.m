@@ -7,13 +7,14 @@
 #import "JavaScriptChannelHandler.h"
 
 @implementation FLTWebViewFactory {
-  NSObject<FlutterBinaryMessenger>* _messenger;
+  NSObject<FlutterPluginRegistrar>* _registrar;
+  //NSObject<FlutterBinaryMessenger>* _messenger;
 }
 
-- (instancetype)initWithMessenger:(NSObject<FlutterBinaryMessenger>*)messenger {
+- (instancetype)initWithRegistrar:(NSObject<FlutterPluginRegistrar>*)registrar {
   self = [super init];
   if (self) {
-    _messenger = messenger;
+    _registrar = registrar;
   }
   return self;
 }
@@ -28,13 +29,14 @@
   FLTWebViewController* webviewController = [[FLTWebViewController alloc] initWithFrame:frame
                                                                          viewIdentifier:viewId
                                                                               arguments:args
-                                                                        binaryMessenger:_messenger];
+                                                                        registrar:_registrar];
   return webviewController;
 }
 
 @end
 
 @implementation FLTWebViewController {
+  NSObject<FlutterPluginRegistrar>* _registrar;
   WKWebView* _webView;
   int64_t _viewId;
   FlutterMethodChannel* _channel;
@@ -47,12 +49,13 @@
 - (instancetype)initWithFrame:(CGRect)frame
                viewIdentifier:(int64_t)viewId
                     arguments:(id _Nullable)args
-              binaryMessenger:(NSObject<FlutterBinaryMessenger>*)messenger {
+                    registrar:(NSObject<FlutterPluginRegistrar>*)registrar {
   if ([super init]) {
+    _registrar = registrar;
     _viewId = viewId;
 
     NSString* channelName = [NSString stringWithFormat:@"plugins.flutter.io/webview_%lld", viewId];
-    _channel = [FlutterMethodChannel methodChannelWithName:channelName binaryMessenger:messenger];
+    _channel = [FlutterMethodChannel methodChannelWithName:channelName binaryMessenger:[_registrar messenger]];
     _javaScriptChannelNames = [[NSMutableSet alloc] init];
 
     WKUserContentController* userContentController = [[WKUserContentController alloc] init];
@@ -85,9 +88,42 @@
     [_webView addObserver:self forKeyPath:@"estimatedProgress" options:NSKeyValueObservingOptionNew context:nil];
 
     NSString* initialUrl = args[@"initialUrl"];
+    NSString* initialFile = args[@"initialFile"];
+    //let initialHeaders = (args["initialHeaders"] as? [String: String])!
+
+    if (initialFile != nil) {
+      @try {
+      }@catch{
+
+      }
+    }
+
+    NSString* initialUrl = args[@"initialUrl"];
     if ([initialUrl isKindOfClass:[NSString class]]) {
       [self loadUrl:initialUrl];
     }
+
+  /*
+    if initialFile != nil {
+            do {
+                try webView!.loadFile(url: initialFile!, headers: initialHeaders)
+            }
+            catch let error as NSError {
+                dump(error)
+            }
+            return
+        }
+        
+        if initialData != nil {
+            let data = (initialData!["data"] as? String)!
+            let mimeType = (initialData!["mimeType"] as? String)!
+            let encoding = (initialData!["encoding"] as? String)!
+            let baseUrl = (initialData!["baseUrl"] as? String)!
+            webView!.loadData(data: data, mimeType: mimeType, encoding: encoding, baseUrl: baseUrl)
+        }
+        else {
+            webView!.loadUrl(url: URL(string: initialUrl)!, headers: initialHeaders)
+        }*/
   }
   return self;
 }
@@ -113,6 +149,8 @@
     [self onReload:call result:result];
   } else if ([[call method] isEqualToString:@"currentUrl"]) {
     [self onCurrentUrl:call result:result];
+  } else if ([[call method] isEqualToString:@"getTitle"]) {
+    [self getTitle:call result:result];
   } else if ([[call method] isEqualToString:@"evaluateJavascript"]) {
     [self onEvaluateJavaScript:call result:result];
   } else if ([[call method] isEqualToString:@"addJavascriptChannels"]) {
@@ -174,6 +212,11 @@
 - (void)onCurrentUrl:(FlutterMethodCall*)call result:(FlutterResult)result {
   _currentUrl = [[_webView URL] absoluteString];
   result(_currentUrl);
+}
+
+- (void)getTitle:(FlutterMethodCall*)call result:(FlutterResult)result {
+  NSString* title = [_webView title];
+  result(title);
 }
 
 - (void)onEvaluateJavaScript:(FlutterMethodCall*)call result:(FlutterResult)result {
