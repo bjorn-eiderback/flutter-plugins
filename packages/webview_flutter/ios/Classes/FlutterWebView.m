@@ -287,7 +287,6 @@
                       inConfiguration:(WKWebViewConfiguration*)configuration {
   switch ([policy integerValue]) {
     case 0:  // require_user_action_for_all_media_types
-      NSLog(@"requiring user action for all types");
       if (@available(iOS 10.0, *)) {
         configuration.mediaTypesRequiringUserActionForPlayback = WKAudiovisualMediaTypeAll;
       } else {
@@ -295,7 +294,6 @@
       }
       break;
     case 1:  // always_allow
-      NSLog(@"allowing auto playback");
       if (@available(iOS 10.0, *)) {
         configuration.mediaTypesRequiringUserActionForPlayback = WKAudiovisualMediaTypeNone;
       } else {
