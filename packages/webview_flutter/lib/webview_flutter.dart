@@ -74,6 +74,8 @@ typedef void PageFinishedCallback(String url);
 
 /// add ProgressChangedCallback, By James
 typedef void ProgressChangedCallback(int progress);
+typedef void LoadErrorCallback(String url, int code, String message);
+typedef void HttpErrorCallback(String url, int statusCode, String message);
 
 /// Specifies possible restrictions on automatic media playback.
 ///
@@ -142,6 +144,8 @@ class WebView extends StatefulWidget {
     this.navigationDelegate,
     this.gestureRecognizers,
     this.onPageFinished,
+    this.onLoadError,
+    this.onHttpError,
     this.onProgressChanged,
     this.debuggingEnabled = false,
     this.initialMediaPlaybackPolicy =
@@ -272,6 +276,8 @@ class WebView extends StatefulWidget {
 
   ///Event fires when the current [progress] of loading a page is changed. by James
   final ProgressChangedCallback onProgressChanged;
+  final LoadErrorCallback onLoadError;
+  final HttpErrorCallback onHttpError;
 
   /// Controls whether WebView debugging is enabled.
   ///
@@ -446,6 +452,20 @@ class _PlatformCallbacksHandler implements WebViewPlatformCallbacksHandler {
   void onProgressChanged(int progress) {
     if (_widget.onProgressChanged != null) {
       _widget.onProgressChanged(progress);
+    }
+  }
+
+  @override
+  void onLoadError(String url, int code, String message) {
+    if (_widget.onLoadError != null) {
+      _widget.onLoadError(url, code, message);
+    }
+  }
+
+  @override
+  void onHttpError(String url, int statusCode, String message) {
+    if (_widget.onHttpError != null) {
+      _widget.onHttpError(url, statusCode, message);
     }
   }
 

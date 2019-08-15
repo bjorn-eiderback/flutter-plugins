@@ -27,6 +27,7 @@ public class FlutterWebView implements PlatformView, MethodCallHandler {
   private final InputAwareWebView webView;
   private final MethodChannel methodChannel;
   private final FlutterWebViewClient flutterWebViewClient;
+  private final FlutterWebChromeClient flutterWebChromeClient;
   private final Handler platformThreadHandler;
 
   @TargetApi(Build.VERSION_CODES.JELLY_BEAN_MR1)
@@ -53,6 +54,11 @@ public class FlutterWebView implements PlatformView, MethodCallHandler {
     methodChannel.setMethodCallHandler(this);
 
     flutterWebViewClient = new FlutterWebViewClient(methodChannel);
+    
+    // add WebChromeClient, by James
+    flutterWebChromeClient = new FlutterWebChromeClient(this, methodChannel);
+    webView.setWebChromeClient(flutterWebChromeClient);
+    
     applySettings((Map<String, Object>) params.get("settings"));
 
     if (params.containsKey(JS_CHANNEL_NAMES_FIELD)) {
@@ -240,6 +246,10 @@ public class FlutterWebView implements PlatformView, MethodCallHandler {
           final boolean debuggingEnabled = (boolean) settings.get(key);
 
           webView.setWebContentsDebuggingEnabled(debuggingEnabled);
+          break;
+        case "customUserAgent":
+          final String customUserAgent = (String) settings.get(key);
+          webView.getSettings().setUserAgentString(customUserAgent);
           break;
         default:
           throw new IllegalArgumentException("Unknown WebView setting: " + key);

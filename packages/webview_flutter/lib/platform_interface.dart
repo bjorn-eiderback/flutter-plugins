@@ -28,6 +28,8 @@ abstract class WebViewPlatformCallbacksHandler {
 
   /// add by James
   void onProgressChanged(int progress);
+  void onLoadError(String url, int code, String message);
+  void onHttpError(String url, int statusCode, String message);
 }
 
 /// Interface for talking to the webview's platform implementation.

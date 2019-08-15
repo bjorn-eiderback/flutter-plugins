@@ -9,8 +9,13 @@ import android.os.Build;
 import android.util.Log;
 import android.view.KeyEvent;
 import android.webkit.WebResourceRequest;
+import android.webkit.WebResourceError;
+import android.webkit.WebResourceResponse;
+import androidx.webkit.WebResourceErrorCompat;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
+import android.webkit.SslErrorHandler;
+import 	android.net.http.SslError;
 import androidx.annotation.NonNull;
 import androidx.webkit.WebViewClientCompat;
 import io.flutter.plugin.common.MethodChannel;
@@ -73,6 +78,22 @@ class FlutterWebViewClient {
     methodChannel.invokeMethod("onPageFinished", args);
   }
 
+  private void onLoadError(WebView view, String url, int code, String msg) {
+    Map<String, Object> obj = new HashMap<>();
+    obj.put("url", url);
+    obj.put("code", code);
+    obj.put("message", msg);
+    methodChannel.invokeMethod("onLoadError", obj);
+  }
+
+  private void onHttpError(WebView view, String url, int statusCode, String msg) {
+    Map<String, Object> obj = new HashMap<>();
+    obj.put("url", url);
+    obj.put("statusCode", statusCode);
+    obj.put("message", msg);
+    methodChannel.invokeMethod("onHttpError", obj);
+  }
+
   private void notifyOnNavigationRequest(
       String url, Map<String, String> headers, WebView webview, boolean isMainFrame) {
     HashMap<String, Object> args = new HashMap<>();
@@ -118,6 +139,66 @@ class FlutterWebViewClient {
         // handled even though they were handled. We don't want to propagate those as they're not
         // truly lost.
       }
+
+      @Override
+      public void onReceivedError(WebView view, int errorCode, String description, String failingUrl) {
+        super.onReceivedError(view, errorCode, description, failingUrl);
+        if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.M){
+          return;
+        }
+        FlutterWebViewClient.this.onLoadError(view, failingUrl, errorCode, description);
+      }
+
+      @TargetApi(Build.VERSION_CODES.M)
+      @Override
+      public void onReceivedError(WebView view, WebResourceRequest request, WebResourceError error) {
+        super.onReceivedError(view, request, error);
+        if(request.isForMainFrame()) {
+          FlutterWebViewClient.this.onLoadError(view, request.getUrl().toString(), 
+            error.getErrorCode(), error.getDescription().toString());
+        }
+      }
+
+      @TargetApi(Build.VERSION_CODES.M)
+      @Override
+      public void onReceivedHttpError(WebView view, WebResourceRequest request, WebResourceResponse errorResponse) {
+        super.onReceivedHttpError(view, request, errorResponse);
+        if(request.isForMainFrame()) {
+          FlutterWebViewClient.this.onHttpError(view, request.getUrl().toString(),
+            errorResponse.getStatusCode(), errorResponse.getReasonPhrase());
+        }
+      }
+
+      @Override
+      public void onReceivedSslError(WebView view, SslErrorHandler handler, SslError error) {
+        super.onReceivedSslError(view, handler, error);
+
+        String message;
+        switch (error.getPrimaryError()) {
+          case SslError.SSL_DATE_INVALID:
+            message = "The date of the certificate is invalid";
+            break;
+          case SslError.SSL_EXPIRED:
+            message = "The certificate has expired";
+            break;
+          case SslError.SSL_IDMISMATCH:
+            message = "Hostname mismatch";
+            break;
+          default:
+          case SslError.SSL_INVALID:
+            message = "A generic error occurred";
+            break;
+          case SslError.SSL_NOTYETVALID:
+            message = "The certificate is not yet valid";
+            break;
+          case SslError.SSL_UNTRUSTED:
+            message = "The certificate authority is not trusted";
+            break;
+        }
+        FlutterWebViewClient.this.onLoadError(view, error.getUrl(), error.getPrimaryError(), "SslError: " + message);
+
+        handler.cancel();
+      }
     };
   }
 
@@ -144,6 +225,66 @@ class FlutterWebViewClient {
         // Deliberately empty. Occasionally the webview will mark events as having failed to be
         // handled even though they were handled. We don't want to propagate those as they're not
         // truly lost.
+      }
+
+      @Override
+      public void onReceivedError(WebView view, int errorCode, String description, String failingUrl) {
+        super.onReceivedError(view, errorCode, description, failingUrl);
+        if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.M){
+          return;
+        }
+        FlutterWebViewClient.this.onLoadError(view, failingUrl, errorCode, description);
+      }
+
+      @TargetApi(Build.VERSION_CODES.M)
+      @Override
+      public void onReceivedError(WebView view, WebResourceRequest request, WebResourceErrorCompat error) {
+        super.onReceivedError(view, request, error);
+        if(request.isForMainFrame()) {
+          FlutterWebViewClient.this.onLoadError(view, request.getUrl().toString(), 
+            error.getErrorCode(), error.getDescription().toString());
+        }
+      }
+
+      @TargetApi(Build.VERSION_CODES.M)
+      @Override
+      public void onReceivedHttpError(WebView view, WebResourceRequest request, WebResourceResponse errorResponse) {
+        super.onReceivedHttpError(view, request, errorResponse);
+        if(request.isForMainFrame()) {
+          FlutterWebViewClient.this.onHttpError(view, request.getUrl().toString(),
+            errorResponse.getStatusCode(), errorResponse.getReasonPhrase());
+        }
+      }
+
+      @Override
+      public void onReceivedSslError(WebView view, SslErrorHandler handler, SslError error) {
+        super.onReceivedSslError(view, handler, error);
+
+        String message;
+        switch (error.getPrimaryError()) {
+          case SslError.SSL_DATE_INVALID:
+            message = "The date of the certificate is invalid";
+            break;
+          case SslError.SSL_EXPIRED:
+            message = "The certificate has expired";
+            break;
+          case SslError.SSL_IDMISMATCH:
+            message = "Hostname mismatch";
+            break;
+          default:
+          case SslError.SSL_INVALID:
+            message = "A generic error occurred";
+            break;
+          case SslError.SSL_NOTYETVALID:
+            message = "The certificate is not yet valid";
+            break;
+          case SslError.SSL_UNTRUSTED:
+            message = "The certificate authority is not trusted";
+            break;
+        }
+        FlutterWebViewClient.this.onLoadError(view, error.getUrl(), error.getPrimaryError(), "SslError: " + message);
+
+        handler.cancel();
       }
     };
   }
