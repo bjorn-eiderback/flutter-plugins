@@ -21,8 +21,12 @@ import io.flutter.plugin.platform.PlatformView;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import io.flutter.plugin.common.PluginRegistry.Registrar;
+import io.flutter.view.FlutterView;
+import java.io.IOException;
 
 public class FlutterWebView implements PlatformView, MethodCallHandler {
+  private static final String TAG = "FlutterWebView";
   private static final String JS_CHANNEL_NAMES_FIELD = "javascriptChannelNames";
   private final InputAwareWebView webView;
   private final MethodChannel methodChannel;
@@ -32,18 +36,15 @@ public class FlutterWebView implements PlatformView, MethodCallHandler {
 
   @TargetApi(Build.VERSION_CODES.JELLY_BEAN_MR1)
   @SuppressWarnings("unchecked")
-  FlutterWebView(
-      final Context context,
-      BinaryMessenger messenger,
-      int id,
-      Map<String, Object> params,
-      final View containerView) {
+  FlutterWebView(Registrar registrar, final Context context, int id, Map<String, Object> params) {
+    BinaryMessenger messenger = registrar.messenger();
+    FlutterView	 containerView = registrar.view();
 
     DisplayListenerProxy displayListenerProxy = new DisplayListenerProxy();
     DisplayManager displayManager =
         (DisplayManager) context.getSystemService(Context.DISPLAY_SERVICE);
     displayListenerProxy.onPreWebViewInitialization(displayManager);
-    webView = new InputAwareWebView(context, containerView);
+    webView = new InputAwareWebView(registrar);
     displayListenerProxy.onPostWebViewInitialization(displayManager);
 
     platformThreadHandler = new Handler(context.getMainLooper());
@@ -54,7 +55,7 @@ public class FlutterWebView implements PlatformView, MethodCallHandler {
     methodChannel.setMethodCallHandler(this);
 
     flutterWebViewClient = new FlutterWebViewClient(methodChannel);
-    
+
     // add WebChromeClient, by James
     flutterWebChromeClient = new FlutterWebChromeClient(this, methodChannel);
     webView.setWebChromeClient(flutterWebChromeClient);
@@ -66,9 +67,29 @@ public class FlutterWebView implements PlatformView, MethodCallHandler {
     }
 
     updateAutoMediaPlaybackPolicy((Integer) params.get("autoMediaPlaybackPolicy"));
-    if (params.containsKey("initialUrl")) {
-      String url = (String) params.get("initialUrl");
-      webView.loadUrl(url);
+
+
+    String initialUrl = (String) params.get("initialUrl");
+    String initialFile = (String) params.get("initialFile");
+    Map<String, String> initialData = (Map<String, String>) params.get("initialData");
+    
+    if (initialFile != null) {
+      try {
+        initialUrl = Util.getUrlAsset(registrar, initialFile);
+      } catch (IOException e) {
+        e.printStackTrace();
+        return;
+      }
+    }
+
+    if (initialData != null) {
+      String data = initialData.get("data");
+      String mimeType = initialData.get("mimeType");
+      String encoding = initialData.get("encoding");
+      String baseUrl = initialData.get("baseUrl");
+      webView.loadDataWithBaseURL(baseUrl, data, mimeType, encoding, null);
+    } else {
+      webView.loadUrl(initialUrl);
     }
   }
 
@@ -103,6 +124,9 @@ public class FlutterWebView implements PlatformView, MethodCallHandler {
       case "loadUrl":
         loadUrl(methodCall, result);
         break;
+      case "loadFile":
+        loadFile(methodCall, result);
+        break;
       case "updateSettings":
         updateSettings(methodCall, result);
         break;
@@ -123,6 +147,9 @@ public class FlutterWebView implements PlatformView, MethodCallHandler {
         break;
       case "currentUrl":
         currentUrl(result);
+        break;
+      case "getTitle":
+        getTitle(result);
         break;
       case "evaluateJavascript":
         evaluateJavaScript(methodCall, result);
@@ -150,6 +177,18 @@ public class FlutterWebView implements PlatformView, MethodCallHandler {
       headers = Collections.emptyMap();
     }
     webView.loadUrl(url, headers);
+    result.success(null);
+  }
+
+  @SuppressWarnings("unchecked")
+  private void loadFile(MethodCall methodCall, Result result) {
+    Map<String, Object> request = (Map<String, Object>) methodCall.arguments;
+    String assetFilePath = (String) request.get("url");
+    Map<String, String> headers = (Map<String, String>) request.get("headers");
+    if (headers == null) {
+      headers = Collections.emptyMap();
+    }
+    webView.loadFile(assetFilePath, headers);
     result.success(null);
   }
 
@@ -182,6 +221,10 @@ public class FlutterWebView implements PlatformView, MethodCallHandler {
 
   private void currentUrl(Result result) {
     result.success(webView.getUrl());
+  }
+
+  private void getTitle(Result result) {
+    result.success(webView.getTitle());
   }
 
   @SuppressWarnings("unchecked")

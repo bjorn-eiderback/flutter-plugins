@@ -10,6 +10,9 @@ import android.content.Context;
 import android.view.View;
 import android.view.inputmethod.InputMethodManager;
 import android.webkit.WebView;
+import io.flutter.plugin.common.PluginRegistry.Registrar;
+import java.util.Map;
+import java.io.IOException;
 
 /**
  * A WebView subclass that mirrors the same implementation hacks that the system WebView does in
@@ -22,14 +25,16 @@ import android.webkit.WebView;
  * <p>See also {@link ThreadedInputConnectionProxyAdapterView}.
  */
 final class InputAwareWebView extends WebView {
+  public Registrar registrar;
   private final View containerView;
 
   private View threadedInputConnectionProxyView;
   private ThreadedInputConnectionProxyAdapterView proxyAdapterView;
 
-  InputAwareWebView(Context context, View containerView) {
-    super(context);
-    this.containerView = containerView;
+  InputAwareWebView(Registrar registrar) {
+    super(registrar.activeContext());
+    this.registrar = registrar;
+    this.containerView = registrar.view();
   }
 
   /**
@@ -154,5 +159,19 @@ final class InputAwareWebView extends WebView {
             imm.isActive(containerView);
           }
         });
+  }
+
+  public void loadFile(String url, Map<String, String> headers) {
+    try {
+      url = Util.getUrlAsset(registrar, url);
+    } catch (IOException e) {
+      return;
+    }
+
+    if (!url.isEmpty()) {
+      loadUrl(url, headers);
+    } else {
+      return;
+    }
   }
 }

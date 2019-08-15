@@ -139,6 +139,7 @@ class WebView extends StatefulWidget {
     Key key,
     this.onWebViewCreated,
     this.initialUrl,
+    this.initialFile,
     this.javascriptMode = JavascriptMode.disabled,
     this.javascriptChannels,
     this.navigationDelegate,
@@ -204,6 +205,9 @@ class WebView extends StatefulWidget {
 
   /// The initial URL to load.
   final String initialUrl;
+
+  /// Add local file support, by James
+  final String initialFile;
 
   /// Whether Javascript execution is enabled.
   final JavascriptMode javascriptMode;
@@ -363,6 +367,7 @@ class _WebViewState extends State<WebView> {
 CreationParams _creationParamsfromWidget(WebView widget) {
   return CreationParams(
     initialUrl: widget.initialUrl,
+    initialFile: widget.initialFile,
     webSettings: _webSettingsFromWidget(widget),
     javascriptChannelNames: _extractChannelNames(widget.javascriptChannels),
     autoMediaPlaybackPolicy: widget.initialMediaPlaybackPolicy,
@@ -518,6 +523,14 @@ class WebViewController {
     return _webViewPlatformController.loadUrl(url, headers);
   }
 
+  Future<void> loadFile(
+    String assetFilePath, {
+    Map<String, String> headers = const {},
+  }) async {
+    assert(assetFilePath != null && assetFilePath.isNotEmpty);
+    return _webViewPlatformController.loadFile(assetFilePath, headers);
+  }
+
   /// Accessor to the current URL that the WebView is displaying.
   ///
   /// If [WebView.initialUrl] was never specified, returns `null`.
@@ -562,6 +575,11 @@ class WebViewController {
   /// Reloads the current URL.
   Future<void> reload() {
     return _webViewPlatformController.reload();
+  }
+
+  /// Get the title
+  Future<String> getTitle() {
+    return _webViewPlatformController.getTitle();
   }
 
   /// Clears all caches used by the [WebView].

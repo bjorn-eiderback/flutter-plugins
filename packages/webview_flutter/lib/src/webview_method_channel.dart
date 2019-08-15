@@ -66,7 +66,22 @@ class MethodChannelWebViewPlatform implements WebViewPlatformController {
   }
 
   @override
+  Future<void> loadFile(
+    String assetFilePath,
+    Map<String, String> headers,
+  ) async {
+    assert(assetFilePath != null);
+    return _channel.invokeMethod<void>('loadFile', <String, dynamic>{
+      'url': assetFilePath,
+      'headers': headers,
+    });
+  }
+
+  @override
   Future<String> currentUrl() => _channel.invokeMethod<String>('currentUrl');
+
+  @override
+  Future<String> getTitle() => _channel.invokeMethod<String>('getTitle');
 
   @override
   Future<bool> canGoBack() => _channel.invokeMethod<bool>("canGoBack");
@@ -144,6 +159,7 @@ class MethodChannelWebViewPlatform implements WebViewPlatformController {
       CreationParams creationParams) {
     return <String, dynamic>{
       'initialUrl': creationParams.initialUrl,
+      'initialFile': creationParams.initialFile,
       'settings': _webSettingsToMap(creationParams.webSettings),
       'javascriptChannelNames': creationParams.javascriptChannelNames.toList(),
       'autoMediaPlaybackPolicy': creationParams.autoMediaPlaybackPolicy.index,

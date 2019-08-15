@@ -60,6 +60,14 @@ abstract class WebViewPlatformController {
         "WebView loadUrl is not implemented on the current platform");
   }
 
+  Future<void> loadFile(
+    String assetFilePath,
+    Map<String, String> headers,
+  ) {
+    throw UnimplementedError(
+        "WebView loadFile is not implemented on the current platform");
+  }
+
   /// Updates the webview settings.
   ///
   /// Any non null field in `settings` will be set as the new setting value.
@@ -107,6 +115,12 @@ abstract class WebViewPlatformController {
 
   /// Reloads the current URL.
   Future<void> reload() {
+    throw UnimplementedError(
+        "WebView reload is not implemented on the current platform");
+  }
+
+  /// Get the current title.
+  Future<void> getTitle() {
     throw UnimplementedError(
         "WebView reload is not implemented on the current platform");
   }
@@ -197,6 +211,7 @@ class WebSettings {
 class CreationParams {
   CreationParams({
     this.initialUrl,
+    this.initialFile,
     this.webSettings,
     this.javascriptChannelNames,
     this.autoMediaPlaybackPolicy =
@@ -207,6 +222,9 @@ class CreationParams {
   ///
   /// When null the webview will be created without loading any page.
   final String initialUrl;
+
+  /// add local file support, by James
+  final String initialFile;
 
   /// The initial [WebSettings] for the new webview.
   ///

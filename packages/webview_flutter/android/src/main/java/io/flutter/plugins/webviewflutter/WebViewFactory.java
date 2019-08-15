@@ -10,22 +10,21 @@ import io.flutter.plugin.common.BinaryMessenger;
 import io.flutter.plugin.common.StandardMessageCodec;
 import io.flutter.plugin.platform.PlatformView;
 import io.flutter.plugin.platform.PlatformViewFactory;
+import io.flutter.plugin.common.PluginRegistry.Registrar;
 import java.util.Map;
 
 public final class WebViewFactory extends PlatformViewFactory {
-  private final BinaryMessenger messenger;
-  private final View containerView;
+  private final Registrar registrar;
 
-  WebViewFactory(BinaryMessenger messenger, View containerView) {
+  WebViewFactory(Registrar registrar) {
     super(StandardMessageCodec.INSTANCE);
-    this.messenger = messenger;
-    this.containerView = containerView;
+    this.registrar = registrar;
   }
 
   @SuppressWarnings("unchecked")
   @Override
   public PlatformView create(Context context, int id, Object args) {
     Map<String, Object> params = (Map<String, Object>) args;
-    return new FlutterWebView(context, messenger, id, params, containerView);
+    return new FlutterWebView(registrar, context, id, params);
   }
 }
