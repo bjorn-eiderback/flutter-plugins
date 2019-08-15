@@ -25,6 +25,9 @@ abstract class WebViewPlatformCallbacksHandler {
 
   /// Invoked by [WebViewPlatformController] when a page has finished loading.
   void onPageFinished(String url);
+
+  /// add by James
+  void onProgressChanged(int progress);
 }
 
 /// Interface for talking to the webview's platform implementation.
@@ -163,6 +166,7 @@ class WebSettings {
     this.javascriptMode,
     this.hasNavigationDelegate,
     this.debuggingEnabled,
+    this.customUserAgent,
   });
 
   /// The JavaScript execution mode to be used by the webview.
@@ -175,6 +179,9 @@ class WebSettings {
   ///
   /// See also: [WebView.debuggingEnabled].
   final bool debuggingEnabled;
+
+  /// customUserAgent, by James
+  final String customUserAgent;
 
   @override
   String toString() {

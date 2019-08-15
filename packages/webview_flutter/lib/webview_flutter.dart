@@ -72,6 +72,9 @@ typedef NavigationDecision NavigationDelegate(NavigationRequest navigation);
 /// Signature for when a [WebView] has finished loading a page.
 typedef void PageFinishedCallback(String url);
 
+/// add ProgressChangedCallback, By James
+typedef void ProgressChangedCallback(int progress);
+
 /// Specifies possible restrictions on automatic media playback.
 ///
 /// This is typically used in [WebView.initialMediaPlaybackPolicy].
@@ -139,9 +142,11 @@ class WebView extends StatefulWidget {
     this.navigationDelegate,
     this.gestureRecognizers,
     this.onPageFinished,
+    this.onProgressChanged,
     this.debuggingEnabled = false,
     this.initialMediaPlaybackPolicy =
         AutoMediaPlaybackPolicy.require_user_action_for_all_media_types,
+    this.customUserAgent = null,
   })  : assert(javascriptMode != null),
         assert(initialMediaPlaybackPolicy != null),
         super(key: key);
@@ -264,6 +269,10 @@ class WebView extends StatefulWidget {
   /// [WebViewController.evaluateJavascript] can assume this.
   final PageFinishedCallback onPageFinished;
 
+
+  ///Event fires when the current [progress] of loading a page is changed. by James
+  final ProgressChangedCallback onProgressChanged;
+
   /// Controls whether WebView debugging is enabled.
   ///
   /// Setting this to true enables [WebView debugging on Android](https://developers.google.com/web/tools/chrome-devtools/remote-debugging/).
@@ -284,6 +293,9 @@ class WebView extends StatefulWidget {
   ///
   /// The default policy is [AutoMediaPlaybackPolicy.require_user_action_for_all_media_types].
   final AutoMediaPlaybackPolicy initialMediaPlaybackPolicy;
+
+  ///Initial options that will be used. James
+  final String customUserAgent;
 
   @override
   State<StatefulWidget> createState() => _WebViewState();
@@ -356,6 +368,7 @@ WebSettings _webSettingsFromWidget(WebView widget) {
     javascriptMode: widget.javascriptMode,
     hasNavigationDelegate: widget.navigationDelegate != null,
     debuggingEnabled: widget.debuggingEnabled,
+    customUserAgent: widget.customUserAgent,
   );
 }
 
@@ -426,6 +439,13 @@ class _PlatformCallbacksHandler implements WebViewPlatformCallbacksHandler {
   void onPageFinished(String url) {
     if (_widget.onPageFinished != null) {
       _widget.onPageFinished(url);
+    }
+  }
+
+  @override
+  void onProgressChanged(int progress) {
+    if (_widget.onProgressChanged != null) {
+      _widget.onProgressChanged(progress);
     }
   }
 

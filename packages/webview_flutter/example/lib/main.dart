@@ -69,6 +69,7 @@ class _WebViewExampleState extends State<WebViewExample> {
           onPageFinished: (String url) {
             print('Page finished loading: $url');
           },
+          customUserAgent: "testagent",
         );
       }),
       floatingActionButton: favoriteButton(),

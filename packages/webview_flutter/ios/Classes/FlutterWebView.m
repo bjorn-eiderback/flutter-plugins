@@ -81,6 +81,9 @@
     // TODO(amirh): return an error if apply settings failed once it's possible to do so.
     // https://github.com/flutter/flutter/issues/36228
 
+    // add progress callback, by James
+    [_webView addObserver:self forKeyPath:@"estimatedProgress" options:NSKeyValueObservingOptionNew context:nil];
+
     NSString* initialUrl = args[@"initialUrl"];
     if ([initialUrl isKindOfClass:[NSString class]]) {
       [self loadUrl:initialUrl];
@@ -250,6 +253,11 @@
       _navigationDelegate.hasDartNavigationDelegate = [hasDartNavigationDelegate boolValue];
     } else if ([key isEqualToString:@"debuggingEnabled"]) {
       // no-op debugging is always enabled on iOS.
+    } else if ([key isEqualToString:@"customUserAgent"]) {
+      if (@available(iOS 9.0, *)) {
+        _webView.customUserAgent = settings[key];
+        NSLog(@"UserAgent from OC: %@", _webView.customUserAgent);
+      }
     } else {
       [unknownKeys addObject:key];
     }
@@ -346,6 +354,18 @@
                                injectionTime:WKUserScriptInjectionTimeAtDocumentStart
                             forMainFrameOnly:NO];
     [userContentController addUserScript:wrapperScript];
+  }
+}
+
+- (void)observeValueForKeyPath:(NSString *)keyPath 
+  ofObject:(id)object 
+  change:(NSDictionary<NSString *,id> *)change 
+  context:(void *)context {
+  if ([keyPath isEqualToString:@"estimatedProgress"]) {
+    int progress = (int)(_webView.estimatedProgress * 100);
+    [_channel invokeMethod:@"onProgressChanged" arguments:@{@"progress" : @(progress)}];
+  }else{
+    [super observeValueForKeyPath:keyPath ofObject:object change:change context:context];
   }
 }
 
