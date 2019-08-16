@@ -163,6 +163,9 @@ public class FlutterWebView implements PlatformView, MethodCallHandler {
       case "clearCache":
         clearCache(result);
         break;
+      case "getTitle":
+        getTitle(result);
+        break;
       default:
         result.notImplemented();
     }
@@ -271,6 +274,10 @@ public class FlutterWebView implements PlatformView, MethodCallHandler {
     result.success(null);
   }
 
+  private void getTitle(Result result) {
+    result.success(webView.getTitle());
+  }
+
   private void applySettings(Map<String, Object> settings) {
     for (String key : settings.keySet()) {
       switch (key) {
@@ -331,5 +338,6 @@ public class FlutterWebView implements PlatformView, MethodCallHandler {
   public void dispose() {
     methodChannel.setMethodCallHandler(null);
     webView.dispose();
+    webView.destroy();
   }
 }
