@@ -8,7 +8,6 @@
 
 @implementation FLTWebViewFactory {
   NSObject<FlutterPluginRegistrar>* _registrar;
-  //NSObject<FlutterBinaryMessenger>* _messenger;
 }
 
 - (instancetype)initWithRegistrar:(NSObject<FlutterPluginRegistrar>*)registrar {
@@ -88,7 +87,7 @@
     [_webView addObserver:self forKeyPath:@"estimatedProgress" options:NSKeyValueObservingOptionNew context:nil];
 
     NSString* initialUrl = args[@"initialUrl"];
-    NSString* initialFile = args[@"initialFile"];
+    //NSString* initialFile = args[@"initialFile"];
 /*
     if (initialFile != nil) {
       @try {
@@ -148,8 +147,6 @@
     [self onReload:call result:result];
   } else if ([[call method] isEqualToString:@"currentUrl"]) {
     [self onCurrentUrl:call result:result];
-  } else if ([[call method] isEqualToString:@"getTitle"]) {
-    [self getTitle:call result:result];
   } else if ([[call method] isEqualToString:@"evaluateJavascript"]) {
     [self onEvaluateJavaScript:call result:result];
   } else if ([[call method] isEqualToString:@"addJavascriptChannels"]) {
@@ -160,6 +157,8 @@
     [self clearCache:result];
   } else if ([[call method] isEqualToString:@"getTitle"]) {
     [self onGetTitle:result];
+  } else if ([[call method] isEqualToString:@"loadFile"]) {
+    [self onLoadFile:call result:result];
   } else {
     result(FlutterMethodNotImplemented);
   }
@@ -183,6 +182,21 @@
   } else {
     result(nil);
   }
+}
+
+- (void)onLoadFile:(FlutterMethodCall*)call result:(FlutterResult)result {
+  NSString* assetFilePath = [call.arguments objectForKey:@"url"];
+  NSDictionary* headers = [call.arguments objectForKey:@"headers"];
+
+  NSString* key = [self->_registrar lookupKeyForAsset:assetFilePath];
+  NSURL *url = [[NSBundle mainBundle] URLForResource:key withExtension:nil];
+  if (url == nil) {
+    @throw [NSError errorWithDomain:assetFilePath code:0 userInfo:nil];
+  }
+
+  [self loadRequest:@{@"url":url.absoluteURL, @"headers":headers}];
+
+  result(nil);
 }
 
 - (void)onCanGoBack:(FlutterMethodCall*)call result:(FlutterResult)result {
@@ -213,11 +227,6 @@
 - (void)onCurrentUrl:(FlutterMethodCall*)call result:(FlutterResult)result {
   _currentUrl = [[_webView URL] absoluteString];
   result(_currentUrl);
-}
-
-- (void)getTitle:(FlutterMethodCall*)call result:(FlutterResult)result {
-  NSString* title = [_webView title];
-  result(title);
 }
 
 - (void)onEvaluateJavaScript:(FlutterMethodCall*)call result:(FlutterResult)result {

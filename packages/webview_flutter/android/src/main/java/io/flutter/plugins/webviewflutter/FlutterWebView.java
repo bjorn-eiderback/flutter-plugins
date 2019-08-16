@@ -24,6 +24,7 @@ import java.util.Map;
 import io.flutter.plugin.common.PluginRegistry.Registrar;
 import io.flutter.view.FlutterView;
 import java.io.IOException;
+import android.app.Activity;
 
 public class FlutterWebView implements PlatformView, MethodCallHandler {
   private static final String TAG = "FlutterWebView";
@@ -33,13 +34,17 @@ public class FlutterWebView implements PlatformView, MethodCallHandler {
   private final FlutterWebViewClient flutterWebViewClient;
   private final FlutterWebChromeClient flutterWebChromeClient;
   private final Handler platformThreadHandler;
+  public final Activity activity;
+  public final Registrar registrar;
 
   @TargetApi(Build.VERSION_CODES.JELLY_BEAN_MR1)
   @SuppressWarnings("unchecked")
   FlutterWebView(Registrar registrar, final Context context, int id, Map<String, Object> params) {
+    this.activity = registrar.activity();
+    this.registrar = registrar;
     BinaryMessenger messenger = registrar.messenger();
     FlutterView	 containerView = registrar.view();
-
+    
     DisplayListenerProxy displayListenerProxy = new DisplayListenerProxy();
     DisplayManager displayManager =
         (DisplayManager) context.getSystemService(Context.DISPLAY_SERVICE);
@@ -54,7 +59,7 @@ public class FlutterWebView implements PlatformView, MethodCallHandler {
     methodChannel = new MethodChannel(messenger, "plugins.flutter.io/webview_" + id);
     methodChannel.setMethodCallHandler(this);
 
-    flutterWebViewClient = new FlutterWebViewClient(methodChannel);
+    flutterWebViewClient = new FlutterWebViewClient(methodChannel, this);
 
     // add WebChromeClient, by James
     flutterWebChromeClient = new FlutterWebChromeClient(this, methodChannel);
@@ -163,9 +168,6 @@ public class FlutterWebView implements PlatformView, MethodCallHandler {
       case "clearCache":
         clearCache(result);
         break;
-      case "getTitle":
-        getTitle(result);
-        break;
       default:
         result.notImplemented();
     }
@@ -272,10 +274,6 @@ public class FlutterWebView implements PlatformView, MethodCallHandler {
     webView.clearCache(true);
     WebStorage.getInstance().deleteAllData();
     result.success(null);
-  }
-
-  private void getTitle(Result result) {
-    result.success(webView.getTitle());
   }
 
   private void applySettings(Map<String, Object> settings) {

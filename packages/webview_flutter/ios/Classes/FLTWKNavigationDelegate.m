@@ -19,6 +19,18 @@
 - (void)webView:(WKWebView*)webView
     decidePolicyForNavigationAction:(WKNavigationAction*)navigationAction
                     decisionHandler:(void (^)(WKNavigationActionPolicy))decisionHandler {
+  NSURL *URL = navigationAction.request.URL;
+  NSString *scheme = [URL scheme];
+  if([scheme isEqualToString:@"tel"] || [scheme isEqualToString:@"sms"] || [scheme isEqualToString:@"mailto"]) {
+    decisionHandler(WKNavigationActionPolicyCancel);
+
+    UIApplication * app = [UIApplication sharedApplication];
+    if ([app canOpenURL:[NSURL URLWithString:URL.absoluteString]]) {
+      [app openURL:[NSURL URLWithString:URL.absoluteString]];
+    }
+    return;
+  }
+
   if (!self.hasDartNavigationDelegate) {
     decisionHandler(WKNavigationActionPolicyAllow);
     return;
@@ -59,4 +71,16 @@
 - (void)webView:(WKWebView*)webView didFinishNavigation:(WKNavigation*)navigation {
   [_methodChannel invokeMethod:@"onPageFinished" arguments:@{@"url" : webView.URL.absoluteString}];
 }
+
+- (void)webView:(WKWebView *)webView didFailProvisionalNavigation:(WKNavigation *)navigation withError:(NSError *)error {
+  [self webView:webView didFailNavigation:navigation withError:error];
+}
+
+- (void)webView:(WKWebView *)webView didFailNavigation:(WKNavigation *)navigation withError:(NSError *)error {
+  NSString* url = @"url";
+  NSNumber* code = [NSNumber numberWithInteger:error.code];
+  NSString* message = error.localizedDescription;
+  [_methodChannel invokeMethod:@"onLoadError" arguments: @{@"url": url, @"code":code, @"message":message}];
+}
+
 @end

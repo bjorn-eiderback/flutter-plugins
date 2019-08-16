@@ -21,6 +21,8 @@ import androidx.webkit.WebViewClientCompat;
 import io.flutter.plugin.common.MethodChannel;
 import java.util.HashMap;
 import java.util.Map;
+import android.content.Intent;
+import android.net.Uri;
 
 // We need to use WebViewClientCompat to get
 // shouldOverrideUrlLoading(WebView view, WebResourceRequest request)
@@ -30,13 +32,74 @@ class FlutterWebViewClient {
   private static final String TAG = "FlutterWebViewClient";
   private final MethodChannel methodChannel;
   private boolean hasNavigationDelegate;
+  private FlutterWebView flutterWebView;
 
-  FlutterWebViewClient(MethodChannel methodChannel) {
+  FlutterWebViewClient(MethodChannel methodChannel, FlutterWebView flutterWebView) {
     this.methodChannel = methodChannel;
+    this.flutterWebView = flutterWebView;
+  }
+
+  boolean processTelSmsMail(String url) {
+    if (url.startsWith(WebView.SCHEME_TEL)) {
+      try {
+        Intent intent = new Intent(Intent.ACTION_DIAL);
+        intent.setData(Uri.parse(url));
+        this.flutterWebView.activity.startActivity(intent);
+        return true;
+      } catch (android.content.ActivityNotFoundException e) {
+        Log.e(TAG, "Error dialing " + url + ": " + e.toString());
+      }
+    } else if (url.startsWith("geo:") || url.startsWith(WebView.SCHEME_MAILTO) || url.startsWith("market:") || url.startsWith("intent:")) {
+      try {
+        Intent intent = new Intent(Intent.ACTION_VIEW);
+        intent.setData(Uri.parse(url));
+        this.flutterWebView.activity.startActivity(intent);
+        return true;
+      } catch (android.content.ActivityNotFoundException e) {
+        Log.e(TAG, "Error with " + url + ": " + e.toString());
+      }
+    }
+    // If sms:5551212?body=This is the message
+    else if (url.startsWith("sms:")) {
+      try {
+        Intent intent = new Intent(Intent.ACTION_VIEW);
+
+        // Get address
+        String address;
+        int parmIndex = url.indexOf('?');
+        if (parmIndex == -1) {
+          address = url.substring(4);
+        } else {
+          address = url.substring(4, parmIndex);
+
+          // If body, then set sms body
+          Uri uri = Uri.parse(url);
+          String query = uri.getQuery();
+          if (query != null) {
+            if (query.startsWith("body=")) {
+              intent.putExtra("sms_body", query.substring(5));
+            }
+          }
+        }
+        intent.setData(Uri.parse("sms:" + address));
+        intent.putExtra("address", address);
+        intent.setType("vnd.android-dir/mms-sms");
+        this.flutterWebView.activity.startActivity(intent);
+        return true;
+      } catch (android.content.ActivityNotFoundException e) {
+        Log.e(TAG, "Error sending sms " + url + ":" + e.toString());
+      }
+    }
+
+    return false;
   }
 
   @TargetApi(Build.VERSION_CODES.LOLLIPOP)
   private boolean shouldOverrideUrlLoading(WebView view, WebResourceRequest request) {
+    if (processTelSmsMail(request.getUrl().toString())) {
+      return true;
+    }
+
     if (!hasNavigationDelegate) {
       return false;
     }
@@ -57,6 +120,10 @@ class FlutterWebViewClient {
   }
 
   private boolean shouldOverrideUrlLoading(WebView view, String url) {
+    if (processTelSmsMail(url)) {
+      return true;
+    }
+
     if (!hasNavigationDelegate) {
       return false;
     }

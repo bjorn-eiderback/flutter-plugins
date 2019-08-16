@@ -524,11 +524,11 @@ class WebViewController {
   }
 
   Future<void> loadFile(
-    String assetFilePath, {
+    String url, {
     Map<String, String> headers = const {},
   }) async {
-    assert(assetFilePath != null && assetFilePath.isNotEmpty);
-    return _webViewPlatformController.loadFile(assetFilePath, headers);
+    assert(url != null && url.isNotEmpty);
+    return _webViewPlatformController.loadFile(url, headers);
   }
 
   /// Accessor to the current URL that the WebView is displaying.
@@ -575,11 +575,6 @@ class WebViewController {
   /// Reloads the current URL.
   Future<void> reload() {
     return _webViewPlatformController.reload();
-  }
-
-  /// Get the title
-  Future<String> getTitle() {
-    return _webViewPlatformController.getTitle();
   }
 
   /// Clears all caches used by the [WebView].

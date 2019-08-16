@@ -61,7 +61,7 @@ abstract class WebViewPlatformController {
   }
 
   Future<void> loadFile(
-    String assetFilePath,
+    String url,
     Map<String, String> headers,
   ) {
     throw UnimplementedError(
@@ -115,12 +115,6 @@ abstract class WebViewPlatformController {
 
   /// Reloads the current URL.
   Future<void> reload() {
-    throw UnimplementedError(
-        "WebView reload is not implemented on the current platform");
-  }
-
-  /// Get the current title.
-  Future<void> getTitle() {
     throw UnimplementedError(
         "WebView reload is not implemented on the current platform");
   }
