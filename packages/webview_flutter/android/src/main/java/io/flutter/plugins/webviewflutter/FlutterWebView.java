@@ -61,18 +61,15 @@ public class FlutterWebView implements PlatformView, MethodCallHandler {
 
     flutterWebViewClient = new FlutterWebViewClient(methodChannel, this);
 
-    // add WebChromeClient, by James
-    flutterWebChromeClient = new FlutterWebChromeClient(this, methodChannel);
-    webView.setWebChromeClient(flutterWebChromeClient);
-    
     applySettings((Map<String, Object>) params.get("settings"));
-
     if (params.containsKey(JS_CHANNEL_NAMES_FIELD)) {
       registerJavaScriptChannelNames((List<String>) params.get(JS_CHANNEL_NAMES_FIELD));
     }
-
     updateAutoMediaPlaybackPolicy((Integer) params.get("autoMediaPlaybackPolicy"));
 
+    // add WebChromeClient, by James
+    flutterWebChromeClient = new FlutterWebChromeClient(this, methodChannel);
+    webView.setWebChromeClient(flutterWebChromeClient);
 
     String initialUrl = (String) params.get("initialUrl");
     String initialFile = (String) params.get("initialFile");
