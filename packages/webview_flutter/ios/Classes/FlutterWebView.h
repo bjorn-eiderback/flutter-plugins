@@ -12,7 +12,7 @@ NS_ASSUME_NONNULL_BEGIN
 - (instancetype)initWithFrame:(CGRect)frame
                viewIdentifier:(int64_t)viewId
                     arguments:(id _Nullable)args
-              binaryMessenger:(NSObject<FlutterBinaryMessenger>*)messenger;
+              registrar:(NSObject<FlutterPluginRegistrar>*)registrar;
 
 - (UIView*)view;
 @end

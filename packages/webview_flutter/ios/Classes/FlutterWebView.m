@@ -89,16 +89,15 @@
 
     NSString* initialUrl = args[@"initialUrl"];
     NSString* initialFile = args[@"initialFile"];
-    //let initialHeaders = (args["initialHeaders"] as? [String: String])!
-
+/*
     if (initialFile != nil) {
       @try {
-      }@catch{
+      }@catch(NSException *exception) {
 
       }
+      return self;
     }
-
-    NSString* initialUrl = args[@"initialUrl"];
+*/
     if ([initialUrl isKindOfClass:[NSString class]]) {
       [self loadUrl:initialUrl];
     }
