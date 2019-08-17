@@ -32,31 +32,26 @@ public class FlutterWebChromeClient extends WebChromeClient {
   public FlutterWebChromeClient(Object obj, MethodChannel methodChannel) {
     super();
     if (obj instanceof FlutterWebView)
-	  this.flutterWebView = (FlutterWebView) obj;
-	this.methodChannel = methodChannel;
+	    this.flutterWebView = (FlutterWebView) obj;
+	  this.methodChannel = methodChannel;
   }
 
   @Override
   public boolean onConsoleMessage(ConsoleMessage consoleMessage) {
-	  /*
     Map<String, Object> obj = new HashMap<>();
-    if (inAppBrowserActivity != null)
-      obj.put("uuid", inAppBrowserActivity.uuid);
     obj.put("sourceURL", consoleMessage.sourceId());
     obj.put("lineNumber", consoleMessage.lineNumber());
     obj.put("message", consoleMessage.message());
     obj.put("messageLevel", consoleMessage.messageLevel().toString());
-    getChannel().invokeMethod("onConsoleMessage", obj);
-	return true;
-	*/
-	return true;
+    this.methodChannel.invokeMethod("onConsoleMessage", obj);
+	  return true;
   }
 
   @Override
   public void onProgressChanged(WebView view, int progress) {
     Map<String, Object> obj = new HashMap<>();
     obj.put("progress", progress);
-	this.methodChannel.invokeMethod("onProgressChanged", obj);
+	  this.methodChannel.invokeMethod("onProgressChanged", obj);
 
     super.onProgressChanged(view, progress);
   }
@@ -65,27 +60,15 @@ public class FlutterWebChromeClient extends WebChromeClient {
   public void onReceivedTitle(WebView view, String title) {
     super.onReceivedTitle(view, title);
 	
-	if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M) {
-		if (title.contains("404") || title.contains("500") || title.contains("Error")) {
-			Map<String, Object> obj = new HashMap<>();
-			obj.put("url", "Unknown url");
-			obj.put("statusCode", 400);
-			obj.put("message", "title contain 404 or 500 or Error");
-			this.methodChannel.invokeMethod("onHttpError", obj);
-		}
-	}
-  }
-/*
-  @Override
-  public void onReceivedTitle(WebView view, String title) {
-    super.onReceivedTitle(view, title);
-    if (inAppBrowserActivity != null && inAppBrowserActivity.actionBar != null && inAppBrowserActivity.options.toolbarTopFixedTitle.isEmpty())
-      inAppBrowserActivity.actionBar.setTitle(title);
-  }
-
-  @Override
-  public void onReceivedIcon(WebView view, Bitmap icon) {
-    super.onReceivedIcon(view, icon);
+    if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M) {
+      if (title.contains("404") || title.contains("500") || title.contains("Error")) {
+        Map<String, Object> obj = new HashMap<>();
+        obj.put("url", "Unknown url");
+        obj.put("statusCode", 400);
+        obj.put("message", "title contain 404 or 500 or Error");
+        this.methodChannel.invokeMethod("onHttpError", obj);
+      }
+    }
   }
 
   //The undocumented magic method override
@@ -97,19 +80,16 @@ public class FlutterWebChromeClient extends WebChromeClient {
     Intent i = new Intent(Intent.ACTION_GET_CONTENT);
     i.addCategory(Intent.CATEGORY_OPENABLE);
     i.setType("image/*");
-    ((inAppBrowserActivity != null) ? inAppBrowserActivity : flutterWebView.activity).startActivityForResult(Intent.createChooser(i, "File Chooser"), FILECHOOSER_RESULTCODE);
-
+    flutterWebView.activity.startActivityForResult(Intent.createChooser(i, "File Chooser"), FILECHOOSER_RESULTCODE);
   }
 
   // For Android 3.0+
   public void openFileChooser(ValueCallback uploadMsg, String acceptType) {
     mUploadMessage = uploadMsg;
     Intent i = new Intent(Intent.ACTION_GET_CONTENT);
-	i.addCategory(Intent.CATEGORY_OPENABLE);
-	*/
-	//i.setType("*/*");
-	/*
-    ((inAppBrowserActivity != null) ? inAppBrowserActivity : flutterWebView.activity).startActivityForResult(
+    i.addCategory(Intent.CATEGORY_OPENABLE);
+    i.setType("*/*");
+    flutterWebView.activity.startActivityForResult(
             Intent.createChooser(i, "File Browser"),
             FILECHOOSER_RESULTCODE);
   }
@@ -120,12 +100,11 @@ public class FlutterWebChromeClient extends WebChromeClient {
     Intent i = new Intent(Intent.ACTION_GET_CONTENT);
     i.addCategory(Intent.CATEGORY_OPENABLE);
     i.setType("image/*");
-    ((inAppBrowserActivity != null) ? inAppBrowserActivity : flutterWebView.activity).startActivityForResult(Intent.createChooser(i, "File Chooser"), FILECHOOSER_RESULTCODE);
+    flutterWebView.activity.startActivityForResult(Intent.createChooser(i, "File Chooser"), FILECHOOSER_RESULTCODE);
 
   }
-*/
+
   //For Android 5.0+
-  /*
   public boolean onShowFileChooser(
           WebView webView, ValueCallback<Uri[]> filePathCallback,
           FileChooserParams fileChooserParams) {
@@ -135,10 +114,8 @@ public class FlutterWebChromeClient extends WebChromeClient {
     mUploadMessageArray = filePathCallback;
 
     Intent contentSelectionIntent = new Intent(Intent.ACTION_GET_CONTENT);
-	contentSelectionIntent.addCategory(Intent.CATEGORY_OPENABLE);
-	*/
-	//contentSelectionIntent.setType("*/*");
-	/*
+    contentSelectionIntent.addCategory(Intent.CATEGORY_OPENABLE);
+    contentSelectionIntent.setType("*/*");
     Intent[] intentArray;
     intentArray = new Intent[0];
 
@@ -146,9 +123,9 @@ public class FlutterWebChromeClient extends WebChromeClient {
     chooserIntent.putExtra(Intent.EXTRA_INTENT, contentSelectionIntent);
     chooserIntent.putExtra(Intent.EXTRA_TITLE, "Image Chooser");
     chooserIntent.putExtra(Intent.EXTRA_INITIAL_INTENTS, intentArray);
-    ((inAppBrowserActivity != null) ? inAppBrowserActivity : flutterWebView.activity).startActivityForResult(chooserIntent, FILECHOOSER_RESULTCODE);
+    flutterWebView.activity.startActivityForResult(chooserIntent, FILECHOOSER_RESULTCODE);
     return true;
   }
-  */
+  
 
 }

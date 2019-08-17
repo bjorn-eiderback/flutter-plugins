@@ -10,6 +10,7 @@ import 'package:flutter/widgets.dart';
 
 import 'webview_flutter.dart';
 
+
 /// Interface for callbacks made by [WebViewPlatformController].
 ///
 /// The webview plugin implements this class, and passes an instance to the [WebViewPlatformController].
@@ -30,6 +31,7 @@ abstract class WebViewPlatformCallbacksHandler {
   void onProgressChanged(int progress);
   void onLoadError(String url, int code, String message);
   void onHttpError(String url, int statusCode, String message);
+  void onConsoleMessage(ConsoleMessage message);
 }
 
 /// Interface for talking to the webview's platform implementation.

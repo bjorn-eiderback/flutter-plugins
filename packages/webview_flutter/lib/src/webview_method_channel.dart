@@ -7,6 +7,7 @@ import 'dart:async';
 import 'package:flutter/services.dart';
 
 import '../platform_interface.dart';
+import '../webview_flutter.dart';
 
 /// A [WebViewPlatformController] that uses a method channel to control the webview.
 class MethodChannelWebViewPlatform implements WebViewPlatformController {
@@ -48,6 +49,20 @@ class MethodChannelWebViewPlatform implements WebViewPlatformController {
       case 'onHttpError':
         _platformCallbacksHandler.onHttpError(call.arguments['url'], 
           call.arguments['statusCode'], call.arguments['message']);
+        return null;
+      case 'onConsoleMessage':
+        String sourceURL = call.arguments["sourceURL"];
+        int lineNumber = call.arguments["lineNumber"];
+        String message = call.arguments["message"];
+        ConsoleMessageLevel messageLevel;
+        ConsoleMessageLevel.values.forEach((element) {
+          if ("ConsoleMessageLevel." + call.arguments["messageLevel"] == element.toString()) {
+            messageLevel = element;
+            return;
+          }
+        });
+        _platformCallbacksHandler.onConsoleMessage(ConsoleMessage(sourceURL, lineNumber, message, messageLevel));
+        return null;
     }
     throw MissingPluginException(
         '${call.method} was invoked but has no handler');

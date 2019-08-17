@@ -87,41 +87,19 @@
     [_webView addObserver:self forKeyPath:@"estimatedProgress" options:NSKeyValueObservingOptionNew context:nil];
 
     NSString* initialUrl = args[@"initialUrl"];
-    //NSString* initialFile = args[@"initialFile"];
-/*
-    if (initialFile != nil) {
-      @try {
-      }@catch(NSException *exception) {
+    NSString* initialFile = args[@"initialFile"];
 
+    if ([initialFile isKindOfClass:[NSString class]]) {
+      @try {
+        [self loadFile:initialFile withHeaders:nil];
+      }@catch(NSError * e) {
       }
       return self;
     }
-*/
+
     if ([initialUrl isKindOfClass:[NSString class]]) {
       [self loadUrl:initialUrl];
     }
-
-  /*
-    if initialFile != nil {
-            do {
-                try webView!.loadFile(url: initialFile!, headers: initialHeaders)
-            }
-            catch let error as NSError {
-                dump(error)
-            }
-            return
-        }
-        
-        if initialData != nil {
-            let data = (initialData!["data"] as? String)!
-            let mimeType = (initialData!["mimeType"] as? String)!
-            let encoding = (initialData!["encoding"] as? String)!
-            let baseUrl = (initialData!["baseUrl"] as? String)!
-            webView!.loadData(data: data, mimeType: mimeType, encoding: encoding, baseUrl: baseUrl)
-        }
-        else {
-            webView!.loadUrl(url: URL(string: initialUrl)!, headers: initialHeaders)
-        }*/
   }
   return self;
 }
@@ -188,13 +166,7 @@
   NSString* assetFilePath = [call.arguments objectForKey:@"url"];
   NSDictionary* headers = [call.arguments objectForKey:@"headers"];
 
-  NSString* key = [self->_registrar lookupKeyForAsset:assetFilePath];
-  NSURL *url = [[NSBundle mainBundle] URLForResource:key withExtension:nil];
-  if (url == nil) {
-    @throw [NSError errorWithDomain:assetFilePath code:0 userInfo:nil];
-  }
-
-  [self loadRequest:@{@"url":url.absoluteURL, @"headers":headers}];
+  [self loadFile:assetFilePath withHeaders:headers];
 
   result(nil);
 }
@@ -379,6 +351,20 @@
   }
 
   return false;
+}
+
+- (bool)loadFile:(NSString*)assetFilePath withHeaders:(NSDictionary<NSString*, NSString*>*)headers {
+  NSString* key = [self->_registrar lookupKeyForAsset:assetFilePath];
+  NSURL *url = [[NSBundle mainBundle] URLForResource:key withExtension:nil];
+  if (url == nil) {
+    @throw [NSError errorWithDomain:assetFilePath code:0 userInfo:nil];
+  }
+
+  if (headers != nil ) {
+    return [self loadUrl:@{@"url":url.absoluteString, @"headers":headers}];
+  } else {
+    return [self loadUrl:@{@"url":url.absoluteString}];
+  }
 }
 
 - (bool)loadUrl:(NSString*)url {

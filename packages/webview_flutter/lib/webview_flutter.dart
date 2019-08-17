@@ -12,6 +12,21 @@ import 'platform_interface.dart';
 import 'src/webview_android.dart';
 import 'src/webview_cupertino.dart';
 
+///
+enum ConsoleMessageLevel {
+  DEBUG, ERROR, LOG, TIP, WARNING
+}
+
+class ConsoleMessage {
+
+  String sourceURL = "";
+  int lineNumber = 1;
+  String message = "";
+  ConsoleMessageLevel messageLevel = ConsoleMessageLevel.LOG;
+
+  ConsoleMessage(this.sourceURL, this.lineNumber, this.message, this.messageLevel);
+}
+
 typedef void WebViewCreatedCallback(WebViewController controller);
 
 enum JavascriptMode {
@@ -76,6 +91,7 @@ typedef void PageFinishedCallback(String url);
 typedef void ProgressChangedCallback(int progress);
 typedef void LoadErrorCallback(String url, int code, String message);
 typedef void HttpErrorCallback(String url, int statusCode, String message);
+typedef void ConsoleMessageCallback(ConsoleMessage consoleMessage);
 
 /// Specifies possible restrictions on automatic media playback.
 ///
@@ -147,11 +163,12 @@ class WebView extends StatefulWidget {
     this.onPageFinished,
     this.onLoadError,
     this.onHttpError,
+    this.onConsoleMessage,
     this.onProgressChanged,
     this.debuggingEnabled = false,
     this.initialMediaPlaybackPolicy =
         AutoMediaPlaybackPolicy.require_user_action_for_all_media_types,
-    this.customUserAgent = null,
+    this.customUserAgent,
   })  : assert(javascriptMode != null),
         assert(initialMediaPlaybackPolicy != null),
         super(key: key);
@@ -282,6 +299,7 @@ class WebView extends StatefulWidget {
   final ProgressChangedCallback onProgressChanged;
   final LoadErrorCallback onLoadError;
   final HttpErrorCallback onHttpError;
+  final ConsoleMessageCallback onConsoleMessage;
 
   /// Controls whether WebView debugging is enabled.
   ///
@@ -471,6 +489,13 @@ class _PlatformCallbacksHandler implements WebViewPlatformCallbacksHandler {
   void onHttpError(String url, int statusCode, String message) {
     if (_widget.onHttpError != null) {
       _widget.onHttpError(url, statusCode, message);
+    }
+  }
+
+  @override
+  void onConsoleMessage(ConsoleMessage message) {
+    if (_widget.onConsoleMessage != null) {
+      _widget.onConsoleMessage(message);
     }
   }
 
