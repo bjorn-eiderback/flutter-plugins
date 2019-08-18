@@ -1,5 +1,6 @@
 package io.flutter.plugins.webviewflutter;
 
+import android.util.Log;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
@@ -25,19 +26,21 @@ public class FlutterWebChromeClient extends WebChromeClient {
   private FlutterWebView flutterWebView;
   private final MethodChannel methodChannel;
 
-  private ValueCallback<Uri[]> mUploadMessageArray;
-  private ValueCallback<Uri> mUploadMessage;
-  private final static int FILECHOOSER_RESULTCODE = 1;
+  public ValueCallback<Uri[]> mUploadMessageArray;
+  public ValueCallback<Uri> mUploadMessage;
+  
+  public final static int FILECHOOSER_RESULTCODE_BELLOW_LOLLILOP = 1;
+  public final static int FILECHOOSER_RESULTCODE_ABOVE_LOLLILOP = 2;
 
-  public FlutterWebChromeClient(Object obj, MethodChannel methodChannel) {
+  public FlutterWebChromeClient(FlutterWebView flutterWebView, MethodChannel methodChannel) {
     super();
-    if (obj instanceof FlutterWebView)
-	    this.flutterWebView = (FlutterWebView) obj;
+	  this.flutterWebView = flutterWebView;
 	  this.methodChannel = methodChannel;
   }
 
   @Override
   public boolean onConsoleMessage(ConsoleMessage consoleMessage) {
+    Log.v(LOG_TAG, "onConsoleMessage");
     Map<String, Object> obj = new HashMap<>();
     obj.put("sourceURL", consoleMessage.sourceId());
     obj.put("lineNumber", consoleMessage.lineNumber());
@@ -73,14 +76,16 @@ public class FlutterWebChromeClient extends WebChromeClient {
 
   //The undocumented magic method override
   //Eclipse will swear at you if you try to put @Override here
-  // For Android 3.0+
+  // For Android < 3.0
   public void openFileChooser(ValueCallback<Uri> uploadMsg) {
 
     mUploadMessage = uploadMsg;
     Intent i = new Intent(Intent.ACTION_GET_CONTENT);
     i.addCategory(Intent.CATEGORY_OPENABLE);
     i.setType("image/*");
-    flutterWebView.activity.startActivityForResult(Intent.createChooser(i, "File Chooser"), FILECHOOSER_RESULTCODE);
+    flutterWebView.activity.startActivityForResult(
+      Intent.createChooser(i, "File Chooser"), 
+      FILECHOOSER_RESULTCODE_BELLOW_LOLLILOP);
   }
 
   // For Android 3.0+
@@ -90,32 +95,30 @@ public class FlutterWebChromeClient extends WebChromeClient {
     i.addCategory(Intent.CATEGORY_OPENABLE);
     i.setType("*/*");
     flutterWebView.activity.startActivityForResult(
-            Intent.createChooser(i, "File Browser"),
-            FILECHOOSER_RESULTCODE);
+      Intent.createChooser(i, "File Browser"),
+      FILECHOOSER_RESULTCODE_BELLOW_LOLLILOP);
   }
 
-  //For Android 4.1
+  //For Android 4.1+
   public void openFileChooser(ValueCallback<Uri> uploadMsg, String acceptType, String capture) {
     mUploadMessage = uploadMsg;
     Intent i = new Intent(Intent.ACTION_GET_CONTENT);
     i.addCategory(Intent.CATEGORY_OPENABLE);
     i.setType("image/*");
-    flutterWebView.activity.startActivityForResult(Intent.createChooser(i, "File Chooser"), FILECHOOSER_RESULTCODE);
-
+    flutterWebView.activity.startActivityForResult(
+      Intent.createChooser(i, "File Chooser"), 
+      FILECHOOSER_RESULTCODE_BELLOW_LOLLILOP);
   }
 
   //For Android 5.0+
-  public boolean onShowFileChooser(
-          WebView webView, ValueCallback<Uri[]> filePathCallback,
-          FileChooserParams fileChooserParams) {
-    if (mUploadMessageArray != null) {
-      mUploadMessageArray.onReceiveValue(null);
-    }
+  public boolean onShowFileChooser(WebView webView, ValueCallback<Uri[]> filePathCallback, 
+    FileChooserParams fileChooserParams) {
     mUploadMessageArray = filePathCallback;
 
     Intent contentSelectionIntent = new Intent(Intent.ACTION_GET_CONTENT);
     contentSelectionIntent.addCategory(Intent.CATEGORY_OPENABLE);
     contentSelectionIntent.setType("*/*");
+
     Intent[] intentArray;
     intentArray = new Intent[0];
 
@@ -123,7 +126,9 @@ public class FlutterWebChromeClient extends WebChromeClient {
     chooserIntent.putExtra(Intent.EXTRA_INTENT, contentSelectionIntent);
     chooserIntent.putExtra(Intent.EXTRA_TITLE, "Image Chooser");
     chooserIntent.putExtra(Intent.EXTRA_INITIAL_INTENTS, intentArray);
-    flutterWebView.activity.startActivityForResult(chooserIntent, FILECHOOSER_RESULTCODE);
+    flutterWebView.activity.startActivityForResult(
+      chooserIntent, 
+      FILECHOOSER_RESULTCODE_ABOVE_LOLLILOP);
     return true;
   }
   

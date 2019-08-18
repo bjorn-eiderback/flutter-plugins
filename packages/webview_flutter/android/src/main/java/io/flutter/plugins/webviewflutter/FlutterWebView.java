@@ -5,14 +5,17 @@
 package io.flutter.plugins.webviewflutter;
 
 import android.util.Log;
+import android.net.Uri;
 import android.annotation.TargetApi;
 import android.content.Context;
+import android.content.Intent;
 import android.hardware.display.DisplayManager;
 import android.os.Build;
 import android.os.Handler;
 import android.view.View;
 import android.webkit.WebStorage;
 import android.webkit.WebViewClient;
+import android.content.ClipData;
 import io.flutter.plugin.common.BinaryMessenger;
 import io.flutter.plugin.common.MethodCall;
 import io.flutter.plugin.common.MethodChannel;
@@ -22,12 +25,13 @@ import io.flutter.plugin.platform.PlatformView;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import io.flutter.plugin.common.PluginRegistry.ActivityResultListener;
 import io.flutter.plugin.common.PluginRegistry.Registrar;
 import io.flutter.view.FlutterView;
 import java.io.IOException;
 import android.app.Activity;
 
-public class FlutterWebView implements PlatformView, MethodCallHandler {
+public class FlutterWebView implements PlatformView, MethodCallHandler, ActivityResultListener {
   private static final String TAG = "FlutterWebView";
   private static final String JS_CHANNEL_NAMES_FIELD = "javascriptChannelNames";
   private final InputAwareWebView webView;
@@ -41,10 +45,10 @@ public class FlutterWebView implements PlatformView, MethodCallHandler {
   @TargetApi(Build.VERSION_CODES.JELLY_BEAN_MR1)
   @SuppressWarnings("unchecked")
   FlutterWebView(Registrar registrar, final Context context, int id, Map<String, Object> params) {
-    this.activity = registrar.activity();
     this.registrar = registrar;
+    this.activity = registrar.activity();
+    registrar.addActivityResultListener(this);
     BinaryMessenger messenger = registrar.messenger();
-    FlutterView	 containerView = registrar.view();
     
     DisplayListenerProxy displayListenerProxy = new DisplayListenerProxy();
     DisplayManager displayManager =
@@ -56,6 +60,7 @@ public class FlutterWebView implements PlatformView, MethodCallHandler {
     platformThreadHandler = new Handler(context.getMainLooper());
     // Allow local storage.
     webView.getSettings().setDomStorageEnabled(true);
+    webView.getSettings().setAllowFileAccess(true);
 
     methodChannel = new MethodChannel(messenger, "plugins.flutter.io/webview_" + id);
     methodChannel.setMethodCallHandler(this);
@@ -335,5 +340,70 @@ public class FlutterWebView implements PlatformView, MethodCallHandler {
     methodChannel.setMethodCallHandler(null);
     webView.dispose();
     webView.destroy();
+  }
+
+  @Override
+  public boolean onActivityResult(int requestCode, int resultCode, Intent data) {
+    Uri uri = null;
+
+    if (requestCode == FlutterWebChromeClient.FILECHOOSER_RESULTCODE_ABOVE_LOLLILOP) {
+      if (flutterWebChromeClient.mUploadMessageArray == null) {
+        return false;
+      }
+
+      try {
+        if(data == null || resultCode != Activity.RESULT_OK) {
+          uri = null;
+        } else {
+          uri = data.getData();
+        }
+        
+        Uri[] results = null;
+        if(data != null) {
+          String dataString = data.getDataString();
+          ClipData clipData = data.getClipData();
+          if(clipData != null) {
+            results = new Uri[clipData.getItemCount()];
+            for(int i = 0; i < clipData.getItemCount(); i++) {
+              ClipData.Item item = clipData.getItemAt(i);
+              results[i] = item.getUri();
+            }
+          }
+          if (dataString != null) {
+            results = new Uri[]{Uri.parse(dataString)};
+          }
+        }
+        flutterWebChromeClient.mUploadMessageArray.onReceiveValue(results);
+        flutterWebChromeClient.mUploadMessageArray = null;
+      } catch (Exception e) {
+        flutterWebChromeClient.mUploadMessageArray = null;
+        e.printStackTrace();
+      }
+      return true;
+    } else if(requestCode == FlutterWebChromeClient.FILECHOOSER_RESULTCODE_BELLOW_LOLLILOP) {
+      if(flutterWebChromeClient.mUploadMessage == null) {
+        return false;
+      }
+    
+      if(resultCode == Activity.RESULT_OK && data != null) {
+        uri = data.getData();
+      }
+
+      flutterWebChromeClient.mUploadMessage.onReceiveValue(uri);
+      flutterWebChromeClient.mUploadMessage = null;
+
+      return true;
+    } else {
+      Log.v(this.TAG, "onActivityResult requestCode != ILECHOOSER_RESULTCODE");
+      if(flutterWebChromeClient.mUploadMessageArray != null) {
+        flutterWebChromeClient.mUploadMessageArray.onReceiveValue(null);
+        flutterWebChromeClient.mUploadMessageArray = null;
+      }else if(flutterWebChromeClient.mUploadMessage != null) {
+        flutterWebChromeClient.mUploadMessage.onReceiveValue(null);
+        flutterWebChromeClient.mUploadMessage = null;
+      }
+    }
+  
+    return false;
   }
 }

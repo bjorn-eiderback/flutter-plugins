@@ -18,13 +18,12 @@ enum ConsoleMessageLevel {
 }
 
 class ConsoleMessage {
-
+  ConsoleMessage(this.sourceURL, this.lineNumber, this.message, this.messageLevel);
+  
   String sourceURL = "";
   int lineNumber = 1;
   String message = "";
   ConsoleMessageLevel messageLevel = ConsoleMessageLevel.LOG;
-
-  ConsoleMessage(this.sourceURL, this.lineNumber, this.message, this.messageLevel);
 }
 
 typedef void WebViewCreatedCallback(WebViewController controller);
