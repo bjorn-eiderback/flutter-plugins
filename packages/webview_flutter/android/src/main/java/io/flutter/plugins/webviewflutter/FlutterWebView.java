@@ -344,22 +344,14 @@ public class FlutterWebView implements PlatformView, MethodCallHandler, Activity
 
   @Override
   public boolean onActivityResult(int requestCode, int resultCode, Intent data) {
-    Uri uri = null;
-
     if (requestCode == FlutterWebChromeClient.FILECHOOSER_RESULTCODE_ABOVE_LOLLILOP) {
       if (flutterWebChromeClient.mUploadMessageArray == null) {
         return false;
       }
 
+      Uri[] results = null;
       try {
-        if(data == null || resultCode != Activity.RESULT_OK) {
-          uri = null;
-        } else {
-          uri = data.getData();
-        }
-        
-        Uri[] results = null;
-        if(data != null) {
+        if(resultCode == Activity.RESULT_OK && data != null) {
           String dataString = data.getDataString();
           ClipData clipData = data.getClipData();
           if(clipData != null) {
@@ -384,24 +376,15 @@ public class FlutterWebView implements PlatformView, MethodCallHandler, Activity
       if(flutterWebChromeClient.mUploadMessage == null) {
         return false;
       }
-    
+
+      Uri uri = null;
       if(resultCode == Activity.RESULT_OK && data != null) {
         uri = data.getData();
       }
-
       flutterWebChromeClient.mUploadMessage.onReceiveValue(uri);
       flutterWebChromeClient.mUploadMessage = null;
 
       return true;
-    } else {
-      Log.v(this.TAG, "onActivityResult requestCode != ILECHOOSER_RESULTCODE");
-      if(flutterWebChromeClient.mUploadMessageArray != null) {
-        flutterWebChromeClient.mUploadMessageArray.onReceiveValue(null);
-        flutterWebChromeClient.mUploadMessageArray = null;
-      }else if(flutterWebChromeClient.mUploadMessage != null) {
-        flutterWebChromeClient.mUploadMessage.onReceiveValue(null);
-        flutterWebChromeClient.mUploadMessage = null;
-      }
     }
   
     return false;

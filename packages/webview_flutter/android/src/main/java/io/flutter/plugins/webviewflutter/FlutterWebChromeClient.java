@@ -118,19 +118,15 @@ public class FlutterWebChromeClient extends WebChromeClient {
     Intent contentSelectionIntent = new Intent(Intent.ACTION_GET_CONTENT);
     contentSelectionIntent.addCategory(Intent.CATEGORY_OPENABLE);
     contentSelectionIntent.setType("*/*");
-
     Intent[] intentArray;
     intentArray = new Intent[0];
-
     Intent chooserIntent = new Intent(Intent.ACTION_CHOOSER);
     chooserIntent.putExtra(Intent.EXTRA_INTENT, contentSelectionIntent);
-    chooserIntent.putExtra(Intent.EXTRA_TITLE, "Image Chooser");
+    chooserIntent.putExtra(Intent.EXTRA_TITLE, "选择文件");
     chooserIntent.putExtra(Intent.EXTRA_INITIAL_INTENTS, intentArray);
     flutterWebView.activity.startActivityForResult(
       chooserIntent, 
       FILECHOOSER_RESULTCODE_ABOVE_LOLLILOP);
     return true;
   }
-  
-
 }
